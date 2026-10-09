@@ -185,12 +185,18 @@ export default function Home() {
           error?: string;
         };
 
-        if (!response.ok || !data.subject?.codename) {
+        if (!response.ok) {
           throw new Error(data.error || 'The subject dossier could not be opened.');
         }
 
+        const codename = data.subject?.codename;
+
+        if (typeof codename !== 'string' || !codename.trim()) {
+          throw new Error('The subject dossier did not contain a valid codename.');
+        }
+
         if (active) {
-          setSubjectCodename(data.subject.codename);
+          setSubjectCodename(codename);
         }
       } catch (caughtError) {
         if (active) {
@@ -226,6 +232,7 @@ export default function Home() {
 
     setInput('');
     setError('');
+
     setMessages((currentMessages) => [
       ...currentMessages,
       {
@@ -235,6 +242,7 @@ export default function Home() {
         turn,
       },
     ]);
+
     setLoading(true);
 
     try {
@@ -257,18 +265,25 @@ export default function Home() {
         error?: string;
       };
 
-      if (!response.ok || !data.reply || !data.biometrics) {
+      if (!response.ok) {
         throw new Error(data.error || 'The subject did not return a usable response.');
       }
+
+      if (typeof data.reply !== 'string' || !data.biometrics) {
+        throw new Error('The subject returned incomplete interrogation data.');
+      }
+
+      const subjectReply: string = data.reply;
+      const subjectBiometrics: Biometrics = data.biometrics;
 
       setMessages((currentMessages) => [
         ...currentMessages,
         {
           id: `subject-${turn}-${Date.now()}`,
           role: 'subject',
-          text: data.reply,
+          text: subjectReply,
           turn,
-          biometrics: data.biometrics,
+          biometrics: subjectBiometrics,
         },
       ]);
 
@@ -283,6 +298,7 @@ export default function Home() {
       );
 
       setInput(question);
+
       setError(
         caughtError instanceof Error
           ? caughtError.message
@@ -321,18 +337,25 @@ export default function Home() {
         error?: string;
       };
 
-      if (
-        !response.ok ||
-        (data.identity !== 'human' && data.identity !== 'android') ||
-        typeof data.correct !== 'boolean'
-      ) {
+      if (!response.ok) {
         throw new Error(data.error || 'The final evidence packet could not be opened.');
       }
 
+      const identity = data.identity;
+      const correct = data.correct;
+
+      if (
+        (identity !== 'human' && identity !== 'android') ||
+        typeof correct !== 'boolean'
+      ) {
+        throw new Error('The final evidence packet was incomplete.');
+      }
+
       setVerdict({
-        identity: data.identity,
-        correct: data.correct,
+        identity,
+        correct,
       });
+
       setPhase('revealed');
     } catch (caughtError) {
       setError(
@@ -400,6 +423,7 @@ export default function Home() {
 
         <div className="mb-5 flex items-center justify-between text-xs uppercase tracking-widest text-slate-500">
           <span>Interrogation progress</span>
+
           <span className="text-slate-300">
             {String(Math.min(completedTurns + 1, MAX_TURNS)).padStart(2, '0')} /{' '}
             {MAX_TURNS}
@@ -438,6 +462,7 @@ export default function Home() {
 
               <span className="text-sm font-medium">
                 {subjectCodename ?? 'SUBJECT LINK PENDING'}
+
                 <span className="ml-2 text-xs text-slate-500">
                   {phase === 'revealed'
                     ? 'case closed'
