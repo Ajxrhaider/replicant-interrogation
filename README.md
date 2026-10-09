@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Replicant Interrogation
 
-## Getting Started
+A six-turn empathy test game powered by Groq's Qwen3 32B model and built with Next.js App Router, Tailwind CSS, and Vercel.
 
-First, run the development server:
+## Local setup
 
 ```bash
+cd ~/Documents/WWW
+npx create-next-app@latest replicant-interrogation --ts --tailwind --app --eslint --use-npm
+cd replicant-interrogation
+npm install groq-sdk
+# Replace generated files with the files in this repository, then add your key:
+printf "GROQ_API_KEY=your_key_here\n" > .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Place `icon.ico`, `icon.svg`, `favicon.ico`, and `favicon.svg` inside `public/`. The metadata in `app/layout.tsx` references all four assets.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+gh auth status
+gh repo create Ajxrhaider/replicant-interrogation --public --source=. --remote=origin --push
+vercel --prod
+```
 
-## Learn More
+Set `GROQ_API_KEY` in Vercel Project Settings → Environment Variables before testing production.
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT. See `LICENSE`.

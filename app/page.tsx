@@ -1,69 +1,11 @@
-import Image from "next/image";
+'use client';
+import { FormEvent, useState } from 'react';
 
+type Message = { role: 'user' | 'suspect'; text: string; turn?: number };
+const prompts = ['Tell me about a time you chose compassion over efficiency.', 'If nobody remembers a person, did their life matter?', 'What is the kindest lie you have ever told?'];
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+  const [turn, setTurn] = useState(1), [input, setInput] = useState(''), [messages, setMessages] = useState<Message[]>([]), [loading, setLoading] = useState(false), [error, setError] = useState(''), [complete, setComplete] = useState(false);
+  async function interrogate(e: FormEvent) { e.preventDefault(); if (!input.trim() || loading || complete) return; const question = input.trim(); setInput(''); setError(''); setMessages(m => [...m, { role: 'user', text: question, turn }]); setLoading(true); try { const r = await fetch('/api/interrogate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, turn }) }); const data = await r.json(); if (!r.ok) throw new Error(data.error); setMessages(m => [...m, { role: 'suspect', text: data.reply }]); if (turn === 6) setComplete(true); else setTurn(t => t + 1); } catch (e) { setError(e instanceof Error ? e.message : 'Connection failure.'); } finally { setLoading(false); } }
+  function reset() { setTurn(1); setMessages([]); setError(''); setComplete(false); }
+  return <main className="scanline min-h-screen"><header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6"><div className="flex items-center gap-3"><div className="grid h-9 w-9 place-items-center rounded-lg bg-indigo-purple text-sm font-bold">H</div><span className="font-heading text-lg font-semibold tracking-tight">HIZAKILABS<span className="text-primary"> / </span>REPLICANT</span></div><div className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400">CASE 07-2049</div></header><section className="mx-auto max-w-4xl px-6 pb-20 pt-12"><div className="mb-12 text-center"><p className="mb-4 text-xs font-semibold uppercase tracking-[.3em] text-accent">Empathy diagnostic protocol</p><h1 className="text-5xl font-bold tracking-tight text-white md:text-7xl">Can you tell<br /><span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">who is real?</span></h1><p className="mx-auto mt-6 max-w-xl text-slate-400">You have six questions to administer an empathy test to a suspected synthetic intelligence. Listen for what the words leave unsaid.</p></div><div className="mb-5 flex items-center justify-between text-xs uppercase tracking-widest text-slate-500"><span>Interrogation progress</span><span className="text-slate-300">{String(turn).padStart(2, '0')} / 06</span></div><div className="mb-8 flex gap-2">{[1,2,3,4,5,6].map(n => <div key={n} className={`h-1.5 flex-1 rounded-full ${n < turn || complete ? 'bg-accent' : n === turn ? 'bg-primary' : 'bg-slate-700'}`} />)}</div><div className="overflow-hidden rounded-2xl border border-slate-700/70 bg-slate-800/70 shadow-2xl shadow-indigo-950/20"><div className="flex items-center justify-between border-b border-slate-700/70 px-5 py-4"><div className="flex items-center gap-3"><span className="h-2.5 w-2.5 animate-pulse rounded-full bg-accent" /><span className="text-sm font-medium">SUSPECT-7 <span className="ml-2 text-xs text-slate-500">online</span></span></div><span className="font-mono text-xs text-slate-500">BIOMETRICS // ENCRYPTED</span></div><div className="min-h-[300px] space-y-5 p-5 md:p-8">{messages.length === 0 && <div className="flex h-60 flex-col items-center justify-center text-center"><div className="mb-4 text-4xl text-slate-600">◌</div><p className="text-slate-400">The suspect is waiting for your first question.</p><p className="mt-2 text-xs text-slate-600">Ask something morally difficult.</p></div>}{messages.map((m,i) => <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${m.role === 'user' ? 'rounded-br-sm bg-primary text-white' : 'rounded-bl-sm border border-slate-700 bg-slate-900/70 text-slate-300'}`}><div className="mb-1 text-[10px] uppercase tracking-widest opacity-50">{m.role === 'user' ? `You // turn ${m.turn}` : 'Suspect-7'}</div>{m.text}</div></div>)}{loading && <div className="text-sm text-slate-500">Suspect-7 is considering its answer<span className="animate-pulse">...</span></div>}</div><div className="border-t border-slate-700/70 p-4"><form onSubmit={interrogate} className="flex gap-3"><input value={input} onChange={e => setInput(e.target.value)} disabled={loading || complete} placeholder={complete ? 'Protocol complete.' : 'Ask your question...'} className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-primary" /><button disabled={loading || complete || !input.trim()} className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-40">Transmit</button></form>{error && <p className="mt-3 text-xs text-red-400">{error}</p>}</div></div><div className="mt-6 flex flex-wrap gap-2">{prompts.map(p => <button key={p} onClick={() => setInput(p)} disabled={loading || complete} className="rounded-full border border-slate-700 px-3 py-2 text-xs text-slate-400 transition hover:border-primary hover:text-white disabled:opacity-40">{p}</button>)}</div>{complete && <div className="mt-8 rounded-2xl border border-accent/30 bg-accent/10 p-6 text-center"><p className="font-heading text-xl text-white">Protocol complete.</p><p className="mt-2 text-sm text-slate-300">The evidence is yours to interpret. Trust your empathy, not just the output.</p><button onClick={reset} className="mt-4 text-sm font-semibold text-accent hover:underline">Start a new case →</button></div>}</section></main>;
 }
